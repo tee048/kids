@@ -1,24 +1,36 @@
 <?php
-// 模擬管理員掃描 QR Code 後傳入 ID
-$member_id = $_GET['id'] ?? null;
+header('Content-Type: application/json');
+$conn = new mysqli("localhost", "root", "", "kids_club");
 
-if ($member_id) {
-    $conn = new mysqli("localhost", "root", "", "kids_club");
+$phone = $_POST['phone'] ?? '';
+$name = $_POST['name'] ?? '';
+
+// 1. 檢查這個電話是否已經註冊過
+$user_query = $conn->query("SELECT * FROM members WHERE phone = '$phone'");
+
+if ($user_query->num_rows > 0) {
+    // 【老朋友】
+    $user = $user_query->fetch_assoc();
+    $member_id = $user['id'];
+    $user_name = $user['parent_name'];
     
-    // 檢查是否有此會員
-    $result = $conn->query("SELECT parent_name FROM members WHERE id = $member_id");
+    // 直接寫入報到紀錄
+    $conn->query("INSERT INTO check_in_logs (member_id) VALUES ($member_id)");
     
-    if ($result->num_rows > 0) {
-        $user = $result->fetch_assoc();
-        // 寫入進館紀錄
-        $conn->query("INSERT INTO check_in_logs (member_id) VALUES ($member_id)");
-        echo "<h1>核准進館！</h1>";
-        echo "歡迎回來，" . $user['parent_name'] . " 家長。";
-    } else {
-        echo "<h1>無效的身分碼！</h1>";
-    }
-    $conn->close();
+    echo json_encode(["status" => "success", "user_name" => $user_name]);
 } else {
-    echo "請掃描 QR Code。";
+    // 【可能是新朋友】
+    if (empty($name)) {
+        // 如果還沒填姓名，通知前端顯示姓名欄位
+        echo json_encode(["status" => "need_register"]);
+    } else {
+        // 已經填了姓名，進行註冊 + 報到
+        $conn->query("INSERT INTO members (parent_name, phone) VALUES ('$name', '$phone')");
+        $new_id = $conn->insert_id;
+        $conn->query("INSERT INTO check_in_logs (member_id) VALUES ($new_id)");
+        
+        echo json_encode(["status" => "success", "user_name" => $name]);
+    }
 }
+$conn->close();
 ?>
