@@ -88,7 +88,7 @@
             <div class="success-icon">✓</div>
             <h2 style="color: #28a745;">報到成功！</h2>
             <p id="welcome_user" style="font-size: 20px; font-weight: bold;"></p>
-            <p style="color: #777; margin-top: 20px;">系統將於 3 秒後自動重置...</p>
+            <p style="color: #777; margin-top: 20px;">系統將於 10 秒後自動重置...</p>
         </div>
     </div>
 
@@ -125,7 +125,7 @@
                 form.classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
                 document.getElementById('welcome_user').innerText = `歡迎光臨，${res.user_name} 家長`;
-                setTimeout(() => { location.reload(); }, 3000);
+                setTimeout(() => { location.reload(); }, 10000);
             } else { alert(res.message); }
         };
     </script>
