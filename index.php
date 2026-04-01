@@ -31,7 +31,7 @@
         }
 
         h2 {
-            color: #31b73c;
+            color: #2c9635;
             margin-bottom: 5px;
             font-size: 34px;
         }
