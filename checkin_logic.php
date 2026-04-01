@@ -97,29 +97,13 @@ if ($result->num_rows > 0) {
         
         if ($insert_stmt->execute()) {
             $new_id = $conn->insert_id;
-<<<<<<< HEAD
             // 紀錄進館
             $conn->query("INSERT INTO check_in_logs (member_id) VALUES ($new_id)");
             echo json_encode(["status" => "success", "user_name" => $name, "member_id" => $new_id]);
-=======
-            
-            // 註冊完後，同步寫入一筆「本日進館紀錄」
-            $conn->query("INSERT INTO check_in_logs (member_id) VALUES ($new_id)");
-            
-            echo json_encode([
-                "status" => "success", 
-                "user_name" => $name, 
-                "member_id" => $new_id
-            ]);
->>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
         } else {
             echo json_encode(["status" => "error", "message" => "註冊失敗：" . $conn->error]);
         }
     }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
 $conn->close();
 ?>
