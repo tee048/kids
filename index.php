@@ -31,17 +31,25 @@
         }
 
         h2 {
+<<<<<<< HEAD
             color: #31b73c;
             margin-bottom: 5px;
             font-size: 34px;
+=======
+            color: #57c05f;
+            margin-bottom: 5px;
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
         }
 
         h3 {
             font-size: 14px;
             color: #777;
             margin-top: 0;
+<<<<<<< HEAD
             font-size: 20px;
 
+=======
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
         }
 
         input,
@@ -80,7 +88,11 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
+<<<<<<< HEAD
             font-size: 25px;
+=======
+            font-size: 17px;
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
             font-weight: bold;
             margin-top: 20px;
         }
@@ -107,8 +119,12 @@
 
         .lang-item input {
             width: auto;
+<<<<<<< HEAD
             margin: 0 8px 0 0;
             /* 移除寬度 95% 影響 */
+=======
+            margin: 0 8px 0 0; /* 移除寬度 95% 影響 */
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
         }
 
         /* 動態幼兒區塊樣式 */
@@ -208,7 +224,11 @@
                     <span>入館幼兒總數:</span>
                     <input type="number" id="child_count" value="0" min="0" max="5" style="width: 80px;" onchange="generateChildFields(this.value)">
                 </div>
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
                 <div id="dynamic_child_container"></div>
 
                 <div class="label-group">填答者身分別 (選填)</div>
@@ -235,21 +255,33 @@
             <div class="success-icon">✓</div>
             <h2 style="color: #28a745;">報到成功！</h2>
             <p id="welcome_user" style="font-size: 20px; font-weight: bold;"></p>
+<<<<<<< HEAD
             <p style="color: #777; margin-top: 20px;">系統將於 05 秒後自動重置...</p>
+=======
+            <p style="color: #777; margin-top: 20px;">系統將於 10 秒後自動重置...</p>
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
         </div>
     </div>
 
     <script>
         // 動態產生幼兒資訊欄位
+<<<<<<< HEAD
         // 動態產生幼兒資訊欄位 (改為年齡區間選單)
         function generateChildFields(count) {
             const container = document.getElementById('dynamic_child_container');
             container.innerHTML = '';
 
+=======
+        function generateChildFields(count) {
+            const container = document.getElementById('dynamic_child_container');
+            container.innerHTML = ''; 
+            
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
             for (let i = 1; i <= count; i++) {
                 const div = document.createElement('div');
                 div.className = 'child-info-block';
                 div.innerHTML = `
+<<<<<<< HEAD
             <span class="child-title">第 ${i} 位幼兒資料</span>
             <input type="text" class="c_name" placeholder="幼兒姓名" required>
             <div style="text-align:left; font-size:13px; color:#666; margin-left:2%;">出生日期：</div>
@@ -260,6 +292,18 @@
                 <option value="女">女 (Female)</option>
             </select>
         `;
+=======
+                    <span class="child-title">第 ${i} 位幼兒資料</span>
+                    <input type="text" class="c_name" placeholder="幼兒姓名" required>
+                    <div style="text-align:left; font-size:13px; color:#666; margin-left:2%;">生日：</div>
+                    <input type="date" class="c_birthday" required>
+                    <select class="c_gender" required>
+                        <option value="">請選擇性別</option>
+                        <option value="男">男 (Male)</option>
+                        <option value="女">女 (Female)</option>
+                    </select>
+                `;
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
                 container.appendChild(div);
             }
         }
@@ -302,16 +346,24 @@
                 document.getElementById('parent_name').required = true;
                 document.getElementById('district').required = true;
                 document.getElementById('submit_btn').innerText = "完成註冊並報到";
+<<<<<<< HEAD
                 document.getElementById('new_member_fields').scrollIntoView({
                     behavior: 'smooth'
                 });
+=======
+                document.getElementById('new_member_fields').scrollIntoView({ behavior: 'smooth' });
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
             } else if (res.status === 'success') {
                 form.classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
                 document.getElementById('welcome_user').innerText = `歡迎光臨，${res.user_name} 家長`;
+<<<<<<< HEAD
                 setTimeout(() => {
                     location.reload();
                 }, 5000);
+=======
+                setTimeout(() => { location.reload(); }, 10000);
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
             } else {
                 alert(res.message);
             }

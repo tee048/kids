@@ -24,6 +24,7 @@ echo "\xEF\xBB\xBF";
 
 $output = fopen('php://output', 'w');
 
+<<<<<<< HEAD
 // 1. 設定標題列：每位幼兒佔 5 格 (姓名、生日、歲數、區間、性別)
 fputcsv($output, array(
     '日期', '時間', '家長姓名', '手機', '區域', '男大人', '女大人', '總幼兒數', 
@@ -37,10 +38,25 @@ fputcsv($output, array(
 $sql = "SELECT c.check_in_time, m.* FROM check_in_logs c
         JOIN members m ON c.member_id = m.id 
         $where_clause
+=======
+// 設定標題列（預留 3 組幼兒欄位，這對 Excel 統計最友善）
+fputcsv($output, array(
+    '日期', '時間', '家長姓名', '手機', '區域', '男大人', '女大人', '總幼兒數', 
+    '幼兒1姓名', '幼兒1生日', '幼兒1性別', 
+    '幼兒2姓名', '幼兒2生日', '幼兒2性別', 
+    '幼兒3姓名', '幼兒3生日', '幼兒3性別', 
+    '常用語言'
+));
+
+$sql = "SELECT c.check_in_time, m.parent_name, m.phone, m.district, m.adult_male, m.adult_female, m.child_count, m.child_name, m.child_birthday, m.child_gender, m.languages 
+        FROM check_in_logs c
+        JOIN members m ON c.member_id = m.id 
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
         ORDER BY c.check_in_time DESC";
 
 $result = $conn->query($sql);
 
+<<<<<<< HEAD
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         // 拆解儲存在資料庫中的字串 (以 | 分隔)
@@ -76,6 +92,37 @@ if ($result) {
 
         fputcsv($output, $line);
     }
+=======
+while ($row = $result->fetch_assoc()) {
+    // 拆解用 | 串接的資料
+    $names = explode('|', $row['child_name']);
+    $birthdays = explode('|', $row['child_birthday']);
+    $genders = explode('|', $row['child_gender']);
+
+    // 組合基礎資料
+    $line = array(
+        date('Y-m-d', strtotime($row['check_in_time'])),
+        date('H:i:s', strtotime($row['check_in_time'])),
+        $row['parent_name'],
+        $row['phone'],
+        $row['district'],
+        $row['adult_male'],
+        $row['adult_female'],
+        $row['child_count']
+    );
+
+    // 填充 3 組幼兒資料，如果沒有就留白
+    for ($i = 0; $i < 3; $i++) {
+        $line[] = $names[$i] ?? '';
+        $line[] = $birthdays[$i] ?? '';
+        $line[] = $genders[$i] ?? '';
+    }
+
+    // 最後加上語言
+    $line[] = $row['languages'];
+
+    fputcsv($output, $line);
+>>>>>>> f307ccadecc1d6acc87192079c553ca5920d3e9f
 }
 
 fclose($output);
