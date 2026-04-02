@@ -59,6 +59,7 @@
             text-align: left;
             margin: 15px 5% 5px 5%;
             font-weight: bold;
+            font-size: 20px;
             color: #555;
             border-left: 4px solid #468b4c;
             padding-left: 8px;
@@ -70,6 +71,7 @@
             align-items: center;
             justify-content: space-between;
             margin: 5px 5%;
+            font-size: 18px;
         }
 
         button {
@@ -96,6 +98,7 @@
             gap: 10px;
             text-align: left;
             margin: 10px 8%;
+            font-size: 16px;
         }
 
         .lang-item {
@@ -239,83 +242,108 @@
     </div>
 
     <script>
-        // 動態產生幼兒資訊欄位
-        // 動態產生幼兒資訊欄位 (改為年齡區間選單)
-        function generateChildFields(count) {
-            const container = document.getElementById('dynamic_child_container');
-            container.innerHTML = '';
+    // 動態產生幼兒資訊欄位
+    function generateChildFields(count) {
+        const container = document.getElementById('dynamic_child_container');
+        container.innerHTML = '';
 
-            for (let i = 1; i <= count; i++) {
-                const div = document.createElement('div');
-                div.className = 'child-info-block';
-                div.innerHTML = `
-            <span class="child-title">第 ${i} 位幼兒資料</span>
-            <input type="text" class="c_name" placeholder="幼兒姓名" required>
-            <div style="text-align:left; font-size:13px; color:#666; margin-left:2%;">出生日期：</div>
-            <input type="date" class="c_birthday" required>
-            <select class="c_gender" required>
-                <option value="">請選擇性別</option>
-                <option value="男">男 (Male)</option>
-                <option value="女">女 (Female)</option>
-            </select>
-        `;
-                container.appendChild(div);
-            }
+        for (let i = 1; i <= count; i++) {
+            const div = document.createElement('div');
+            div.className = 'child-info-block';
+            div.innerHTML = `
+                <span class="child-title">第 ${i} 位幼兒資料</span>
+                <input type="text" class="c_name" placeholder="幼兒姓名" required>
+                <div style="text-align:left; font-size:13px; color:#666; margin-left:2%;">出生日期：</div>
+                <input type="date" class="c_birthday" required>
+                <select class="c_gender" required>
+                    <option value="">請選擇性別</option>
+                    <option value="男">男 (Male)</option>
+                    <option value="女">女 (Female)</option>
+                </select>
+            `;
+            container.appendChild(div);
         }
+    }
 
-        const form = document.getElementById('checkinForm');
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const phone = document.getElementById('phone').value;
-            const langs = Array.from(document.querySelectorAll('input[name="lang"]:checked')).map(el => el.value).join(',');
+    const form = document.getElementById('checkinForm');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submit_btn');
+        submitBtn.disabled = true; // 防止重複點擊
+        submitBtn.innerText = "處理中...";
 
-            // 組合多位幼兒資訊
-            const childNames = Array.from(document.querySelectorAll('.c_name')).map(el => el.value).join('|');
-            const childBirthdays = Array.from(document.querySelectorAll('.c_birthday')).map(el => el.value).join('|');
-            const childGenders = Array.from(document.querySelectorAll('.c_gender')).map(el => el.value).join('|');
+        // 重新抓取當下所有欄位的數值 (包含動態出現的註冊欄位)
+        const phone = document.getElementById('phone').value;
+        const parentName = document.getElementById('parent_name').value;
+        const district = document.getElementById('district').value;
+        const purpose = document.getElementById('purpose').value;
+        const relationship = document.getElementById('relationship').value;
+        const adultMale = document.getElementById('adult_male').value;
+        const adultFemale = document.getElementById('adult_female').value;
+        const childCount = document.getElementById('child_count').value;
+        const respondentType = document.getElementById('respondent_type').value;
 
-            const data = new URLSearchParams({
-                phone: phone,
-                name: document.getElementById('parent_name').value,
-                district: document.getElementById('district').value,
-                purpose: document.getElementById('purpose').value,
-                relationship: document.getElementById('relationship').value,
-                adult_male: document.getElementById('adult_male').value,
-                adult_female: document.getElementById('adult_female').value,
-                child_count: document.getElementById('child_count').value,
-                child_name: childNames,
-                child_birthday: childBirthdays,
-                child_gender: childGenders,
-                respondent_type: document.getElementById('respondent_type').value,
-                languages: langs
-            });
+        const langs = Array.from(document.querySelectorAll('input[name="lang"]:checked')).map(el => el.value).join(',');
+        const childNames = Array.from(document.querySelectorAll('.c_name')).map(el => el.value).join('|');
+        const childBirthdays = Array.from(document.querySelectorAll('.c_birthday')).map(el => el.value).join('|');
+        const childGenders = Array.from(document.querySelectorAll('.c_gender')).map(el => el.value).join('|');
 
+        // 封裝成傳送資料
+        const data = new URLSearchParams({
+            phone: phone,
+            name: parentName, // 這裡確保了第二次按下時會帶上姓名
+            district: district,
+            purpose: purpose,
+            relationship: relationship,
+            adult_male: adultMale,
+            adult_female: adultFemale,
+            child_count: childCount,
+            child_name: childNames,
+            child_birthday: childBirthdays,
+            child_gender: childGenders,
+            respondent_type: respondentType,
+            languages: langs
+        });
+
+        try {
             const response = await fetch('checkin_logic.php', {
                 method: 'POST',
                 body: data
             });
-            const res = await response.json();
+
+            // 解析 JSON 前先確認回傳內容
+            const responseText = await response.text();
+            console.log("PHP 回傳內容：", responseText); 
+            const res = JSON.parse(responseText);
 
             if (res.status === 'need_register') {
+                // 顯示註冊欄位並將按鈕改為「完成註冊」
                 document.getElementById('new_member_fields').classList.remove('hidden');
                 document.getElementById('parent_name').required = true;
                 document.getElementById('district').required = true;
-                document.getElementById('submit_btn').innerText = "完成註冊並報到";
-                document.getElementById('new_member_fields').scrollIntoView({
-                    behavior: 'smooth'
-                });
+                submitBtn.innerText = "完成註冊並報到";
+                document.getElementById('new_member_fields').scrollIntoView({ behavior: 'smooth' });
             } else if (res.status === 'success') {
+                // 成功則隱藏表單顯示結果
                 form.classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
                 document.getElementById('welcome_user').innerText = `歡迎光臨，${res.user_name} 家長`;
-                setTimeout(() => {
-                    location.reload();
-                }, 5000);
+                setTimeout(() => { location.reload(); }, 5000);
             } else {
-                alert(res.message);
+                alert(res.message || "發生未知錯誤");
             }
-        };
-    </script>
+        } catch (error) {
+            console.error("解析失敗：", error);
+            alert("系統錯誤：解析回傳資料失敗。請查看 F12 Console 訊息。");
+        } finally {
+            submitBtn.disabled = false; // 無論成功失敗都恢復按鈕
+            if (submitBtn.innerText === "處理中...") {
+                submitBtn.innerText = "確認報到";
+            }
+        }
+    };
+</script>
 </body>
 
 </html>
