@@ -1,40 +1,30 @@
 <?php
-// 強制顯示錯誤，把 500 變回人類看得懂的字
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
+// 1. 建立資料庫連線
 $conn = new mysqli("localhost", "root", "", "kids_club");
 
 if ($conn->connect_error) {
     die("連線失敗: " . $conn->connect_error);
 }
 
-try {
-    // 重大修改：改讀取 c.id (當作 log_id) 與 c.remark (單次紀錄備註)
-    $sql = "SELECT c.id as log_id, c.checked_parents, c.checked_children, m.phone, c.remark, c.check_in_time 
-            FROM check_in_logs c
-            JOIN members m ON c.member_id = m.id 
-            WHERE DATE(c.check_in_time) = CURDATE()
-            ORDER BY c.check_in_time DESC";
+// 2. 查詢今日進館清單 (從 log 抓取當次勾選的 checked_parents 與 checked_children)
+$sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone, m.remark, c.check_in_time 
+        FROM check_in_logs c
+        JOIN members m ON c.member_id = m.id 
+        WHERE DATE(c.check_in_time) = CURDATE()
+        ORDER BY c.check_in_time DESC";
 
-    $result = $conn->query($sql);
-} catch (Exception $e) {
-    die("資料庫查詢失敗：" . $e->getMessage());
-}
+$result = $conn->query($sql);
 
+// 3. 統計今日實到總人數 (根據當次勾選名單計算)
 $total_adults = 0;
 $total_children = 0;
-$rows = [];
 
+// 先將結果存入陣列，方便下方表格重複使用，同時計算統計數據
+$rows = [];
 if ($result && $result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
-        // 確保 NULL 也能安全處理
-        $parents_val = $row['checked_parents'] ?? '';
-        $children_val = $row['checked_children'] ?? '';
-        
-        $parents_arr = array_filter(explode('|', $parents_val));
-        $children_arr = array_filter(explode('|', $children_val));
+        $parents_arr = array_filter(explode('|', $row['checked_parents'] ?? ''));
+        $children_arr = array_filter(explode('|', $row['checked_children'] ?? ''));
         
         $row['p_count'] = count($parents_arr);
         $row['c_count'] = count($children_arr);
@@ -50,7 +40,7 @@ if ($result && $result->num_rows > 0) {
 <head>
     <meta charset="UTF-8">
     <title>管理後台 | 中壢過嶺親子館</title>
-    <meta http-equiv="refresh" content="5">
+    <meta http-equiv="refresh" content="30">
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
         .stats { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -117,8 +107,8 @@ if ($result && $result->num_rows > 0) {
                         <td><span style="color: #48a187; font-weight: bold;"><?php echo $row['c_count']; ?></span></td>
                         <td><?php echo str_replace('|', ', ', htmlspecialchars($row['checked_children'])); ?></td>
                         <td class="remark-text">
-                            <input type="text" class="remark-input" id="remark_<?php echo $row['log_id']; ?>" value="<?php echo htmlspecialchars($row['remark'] ?? ''); ?>">
-                            <button class="save-btn" onclick="saveRemark(<?php echo $row['log_id']; ?>)">✔</button>
+                            <input type="text" class="remark-input" id="remark_<?php echo $row['member_id']; ?>" value="<?php echo htmlspecialchars($row['remark'] ?? ''); ?>">
+                            <button class="save-btn" onclick="saveRemark(<?php echo $row['member_id']; ?>)">✔</button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -132,12 +122,11 @@ if ($result && $result->num_rows > 0) {
     </div>
 
     <script>
-    // 參數名稱改為 logId，確保傳遞正確的紀錄 ID
-    async function saveRemark(logId) {
-        const remarkValue = document.getElementById('remark_' + logId).value;
+    async function saveRemark(memberId) {
+        const remarkValue = document.getElementById('remark_' + memberId).value;
         const data = new URLSearchParams({
             action: 'update_remark',
-            log_id: logId, // 發送給後端的參數改為 log_id
+            member_id: memberId,
             remark: remarkValue
         });
         
