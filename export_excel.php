@@ -31,20 +31,19 @@ echo "\xEF\xBB\xBF";
 
 $output = fopen('php://output', 'w');
 
-// 1. 設定全新的標題列
+// 1. 設定全新的標題列 (已加入：填答者身分別)
 fputcsv($output, array(
     '日期', '時間', '當次入館家長', '大人實到數', '當次入館幼兒', '幼兒實到數', '手機號碼', '區域', 
     '幼兒1姓名', '幼兒1出生日期', '幼兒1歲數', '幼兒1年齡區間', '幼兒1性別', 
     '幼兒2姓名', '幼兒2出生日期', '幼兒2歲數', '幼兒2年齡區間', '幼兒2性別', 
     '幼兒3姓名', '幼兒3出生日期', '幼兒3歲數', '幼兒3年齡區間', '幼兒3性別', 
-    '常用語言', '館方備註'
+    '常用語言', '填答者身分別', '館方備註'
 ));
 
-// 2. 執行查詢：明確區分 c.remark 與 m.remark (若有的話)
-// 使用 m.remark as m_remark 是為了防止覆蓋 c.remark
+// 2. 執行查詢：加入 m.respondent_type 欄位
 $sql = "SELECT c.check_in_time, c.checked_parents, c.checked_children, c.remark as log_remark, 
                m.child_name, m.child_birthday, m.child_exact_age, m.child_age_group, m.child_gender,
-               m.phone, m.district, m.languages
+               m.phone, m.district, m.languages, m.respondent_type
         FROM check_in_logs c
         JOIN members m ON c.member_id = m.id 
         $where_clause
@@ -116,7 +115,8 @@ if ($result) {
 
         $line = array_merge($line, $child_output);
         $line[] = $row['languages'];
-        $line[] = $row['log_remark'] ?? ''; // 使用剛剛別名的 log_remark
+        $line[] = $row['respondent_type'] ?? ''; // 新增這一行：對應標題列的「填答者身分別」
+        $line[] = $row['log_remark'] ?? '';      // 館方備註
 
         fputcsv($output, $line);
     }
