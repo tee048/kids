@@ -6,29 +6,25 @@ if ($conn->connect_error) {
     die("連線失敗: " . $conn->connect_error);
 }
 
-// 2. 查詢今日進館清單 (從 log 抓取當次勾選的 checked_parents 與 checked_children)
-$sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone, m.remark, c.check_in_time 
-        FROM check_in_logs c
+// 2. 修正：明確抓取 c.remark (報到紀錄備註) 與 c.log_id
+$sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone, c.remark, c.check_in_time, c.log_id
+        FROM check_in_logs c 
         JOIN members m ON c.member_id = m.id 
         WHERE DATE(c.check_in_time) = CURDATE()
         ORDER BY c.check_in_time DESC";
 
 $result = $conn->query($sql);
 
-// 3. 統計今日實到總人數 (根據當次勾選名單計算)
+// 3. 統計數據處理
 $total_adults = 0;
 $total_children = 0;
-
-// 先將結果存入陣列，方便下方表格重複使用，同時計算統計數據
 $rows = [];
 if ($result && $result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
         $parents_arr = array_filter(explode('|', $row['checked_parents'] ?? ''));
         $children_arr = array_filter(explode('|', $row['checked_children'] ?? ''));
-        
         $row['p_count'] = count($parents_arr);
         $row['c_count'] = count($children_arr);
-        
         $total_adults += $row['p_count'];
         $total_children += $row['c_count'];
         $rows[] = $row;
@@ -47,13 +43,11 @@ if ($result && $result->num_rows > 0) {
         .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 150px; text-align: center; }
         .card h3 { margin: 0; color: #777; font-size: 14px; }
         .card p { margin: 10px 0 0; font-size: 24px; font-weight: bold; color: #48a187; }
-        
         .table-container { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; font-size: 15px; }
         th { background: #48a187; color: white; white-space: nowrap; }
         tr:hover { background: #fdfaf0; }
-        
         .btn-export { text-decoration: none; background: #3c8326; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block; margin-bottom: 15px; }
         .remark-input { width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
         .save-btn { background: #48a187; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
@@ -107,8 +101,8 @@ if ($result && $result->num_rows > 0) {
                         <td><span style="color: #48a187; font-weight: bold;"><?php echo $row['c_count']; ?></span></td>
                         <td><?php echo str_replace('|', ', ', htmlspecialchars($row['checked_children'])); ?></td>
                         <td class="remark-text">
-                            <input type="text" class="remark-input" id="remark_<?php echo $row['member_id']; ?>" value="<?php echo htmlspecialchars($row['remark'] ?? ''); ?>">
-                            <button class="save-btn" onclick="saveRemark(<?php echo $row['member_id']; ?>)">✔</button>
+                            <input type="text" class="remark-input" id="remark_<?php echo $row['log_id']; ?>" value="<?php echo htmlspecialchars($row['remark'] ?? ''); ?>">
+                            <button class="save-btn" onclick="saveRemark(<?php echo $row['log_id']; ?>)">✔</button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -122,14 +116,17 @@ if ($result && $result->num_rows > 0) {
     </div>
 
     <script>
-    async function saveRemark(memberId) {
-        const remarkValue = document.getElementById('remark_' + memberId).value;
+    async function saveRemark(logId) {
+        const remarkInput = document.getElementById('remark_' + logId);
+        if(!remarkInput) return;
+        const remarkValue = remarkInput.value;
+        
         const data = new URLSearchParams({
             action: 'update_remark',
-            member_id: memberId,
+            log_id: logId,
             remark: remarkValue
         });
-        
+            
         try {
             const response = await fetch('checkin_logic.php', { method: 'POST', body: data });
             const res = await response.json();

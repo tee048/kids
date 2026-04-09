@@ -15,8 +15,9 @@
         .label-group { text-align: left; margin: 15px 5% 5px 5%; font-weight: bold; font-size: 20px; color: #555; border-left: 4px solid #468b4c; padding-left: 8px; margin-top: 20px; }
         .flex-row { display: flex; align-items: center; justify-content: space-between; margin: 5px 5%; font-size: 18px; }
         button { width: 96%; padding: 15px; background: #48a187; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 25px; font-weight: bold; margin-top: 20px; }
+        .btn-secondary { background: #6c757d; margin-top: 10px; font-size: 25px; }
         .hidden { display: none; }
-        .lang-item { display: flex; align-items: center; font-size: 20px; cursor: pointer; padding: 10px 0; }
+        .lang-item { display: flex; align-items: center; font-size: 20px; padding: 10px 0; }
         .lang-item input { width: 30px; height: 30px; margin-right: 15px; }
         .child-info-block { background: #f9f9f9; padding: 15px; border-radius: 10px; margin: 10px 5%; border: 1px dashed #57c05f; text-align: left; }
         .success-icon { font-size: 60px; color: #28a745; margin-bottom: 10px; }
@@ -72,7 +73,7 @@
         </div>
 
         <button onclick="submitOldMemberCheckin()" style="background: #3c8326;">確認入館</button>
-        <button onclick="location.reload()" class="btn-secondary" style="background: #6c757d;">取消並返回</button>
+        <button onclick="location.reload()" class="btn-secondary">取消並返回</button>
     </div>
 
     <div id="result" class="container2 hidden">
@@ -110,11 +111,35 @@
             submitBtn.disabled = true;
 
             const phone = document.getElementById('phone').value;
-            const data = new URLSearchParams({
-                phone: phone,
-                action: 'check_member',
-                parent_name: document.getElementById('parent_name').value
-            });
+            const newMemberFields = document.getElementById('new_member_fields');
+            let data;
+
+            // 判斷目前是否為「註冊模式」（隱藏的註冊區塊已被展開）
+            if (!newMemberFields.classList.contains('hidden')) {
+                const cNames = Array.from(document.querySelectorAll('.c_name')).map(el => el.value).join('|');
+                const cBirthdays = Array.from(document.querySelectorAll('.c_birthday')).map(el => el.value).join('|');
+                const cGenders = Array.from(document.querySelectorAll('.c_gender')).map(el => el.value).join('|');
+
+                // 構建傳送給後端「功能 D：新會員註冊流程」的正確參數
+                data = new URLSearchParams({
+                    action: 'register', // 👉 補上這行專屬指令
+                    name: document.getElementById('parent_name').value, 
+                    phone: phone,
+                    district: document.getElementById('district').value,
+                    adult_male: document.getElementById('adult_male').value,
+                    adult_female: document.getElementById('adult_female').value,
+                    child_count: document.getElementById('child_count').value,
+                    child_name: cNames,
+                    child_birthday: cBirthdays,
+                    child_gender: cGenders
+                });
+            } else {
+                // 單純查詢舊會員模式
+                data = new URLSearchParams({
+                    phone: phone,
+                    action: 'check_member'
+                });
+            }
 
             try {
                 const response = await fetch('checkin_logic.php', { method: 'POST', body: data });
@@ -128,23 +153,35 @@
                     document.getElementById('old_member_selection').classList.remove('hidden');
                     window.currentMemberId = res.data.id;
 
-                    // 生成家長 Checkboxes (已移除 checked)
+                    // 重新生成家長 Checkboxes (包含刪除按鈕)
                     const parentArea = document.getElementById('parent_checkboxes');
                     parentArea.innerHTML = '';
                     const parents = res.data.parent_name.split('|');
-                    parents.forEach(p => {
+                    parents.forEach((p, index) => {
                         if (p.trim() !== "") {
-                            parentArea.innerHTML += `<label class="lang-item"><input type="checkbox" name="select_parent" value="${p}"> ${p}</label>`;
+                            parentArea.innerHTML += `
+                            <div class="lang-item" id="p_wrap_${index}" style="justify-content: space-between;">
+                                <label style="display: flex; align-items: center; cursor: pointer; flex-grow: 1;">
+                                    <input type="checkbox" name="select_parent" value="${p}"> ${p}
+                                </label>
+                                <span onclick="deletePerson('parent', '${p}', 'p_wrap_${index}')" style="color: #dc3545; cursor: pointer; font-size: 14px; padding: 2px 8px; border: 1px solid #dc3545; border-radius: 4px;">刪除</span>
+                            </div>`;
                         }
                     });
 
-                    // 生成幼兒 Checkboxes (修正變數命名並移除 checked)
+                    // 重新生成幼兒 Checkboxes (包含刪除按鈕)
                     const childArea = document.getElementById('child_checkboxes');
                     childArea.innerHTML = '';
                     const children = res.data.child_name.split('|');
-                    children.forEach(c => {
+                    children.forEach((c, index) => {
                         if (c.trim() !== "") {
-                            childArea.innerHTML += `<label class="lang-item"><input type="checkbox" name="select_children" value="${c}"> ${c}</label>`;
+                            childArea.innerHTML += `
+                            <div class="lang-item" id="c_wrap_${index}" style="justify-content: space-between;">
+                                <label style="display: flex; align-items: center; cursor: pointer; flex-grow: 1;">
+                                    <input type="checkbox" name="select_children" value="${c}"> ${c}
+                                </label>
+                                <span onclick="deletePerson('child', '${c}', 'c_wrap_${index}')" style="color: #dc3545; cursor: pointer; font-size: 14px; padding: 2px 8px; border: 1px solid #dc3545; border-radius: 4px;">刪除</span>
+                            </div>`;
                         }
                     });
                 } else if (res.status === 'success') {
@@ -157,6 +194,31 @@
             }
         };
 
+        // 新增的刪除函式
+        async function deletePerson(type, name, elementId) {
+            if (!confirm(`確定要從系統名單中永久刪除「${name}」嗎？`)) return;
+
+            const data = new URLSearchParams({
+                action: 'delete_person',
+                member_id: window.currentMemberId,
+                type: type,
+                name: name
+            });
+
+            try {
+                const response = await fetch('checkin_logic.php', { method: 'POST', body: data });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    // 刪除成功後，從畫面上直接移除該欄位
+                    document.getElementById(elementId).remove();
+                } else {
+                    alert('刪除失敗：' + (res.message || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('系統通訊錯誤');
+            }
+        }
+
         async function submitOldMemberCheckin() {
             const selectedParents = Array.from(document.querySelectorAll('input[name="select_parent"]:checked')).map(el => el.value).join('|');
             const selectedChildren = Array.from(document.querySelectorAll('input[name="select_children"]:checked')).map(el => el.value).join('|');
@@ -164,8 +226,7 @@
             const newParent = document.getElementById('add_new_parent').value;
             const newChild = document.getElementById('add_new_child').value;
 
-            // 驗證是否至少勾選一人
-            if (!selectedParents && !selectedChildren && !newParent && !newChild) {
+            if (!selectedParents && selectedChildren === "" && !newParent && !newChild) {
                 alert("請至少勾選或新增一位入館人員");
                 return;
             }
@@ -188,7 +249,7 @@
                     alert(res.message || "報到失敗");
                 }
             } catch (e) {
-                alert("通訊失敗");
+                alert("通訊失敗，請檢查網路。");
             }
         }
 
