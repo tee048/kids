@@ -6,8 +6,9 @@ if ($conn->connect_error) {
     die("連線失敗: " . $conn->connect_error);
 }
 
-// 2. 修正：明確抓取 c.remark (報到紀錄備註) 與 c.log_id
-$sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone, c.remark, c.check_in_time, c.log_id,
+// 2. 修正：SQL 查詢需加入 c.floor 與 c.channel（報名管道）
+$sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone, 
+               c.remark, c.floor, c.channel, c.check_in_time, c.log_id,
                m.child_name, m.child_gender
         FROM check_in_logs c 
         JOIN members m ON c.member_id = m.id 
@@ -59,100 +60,20 @@ if ($result && $result->num_rows > 0) {
     <title>管理後台 | 中壢過嶺親子館</title>
     <meta http-equiv="refresh" content="5">
     <style>
-        body {
-            font-family: sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .card {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            flex: 1;
-            min-width: 150px;
-            text-align: center;
-        }
-
-        .card h3 {
-            margin: 0;
-            color: #777;
-            font-size: 24px;
-        }
-
-        .card p {
-            margin: 10px 0 0;
-            font-size: 24px;
-            font-weight: bold;
-            color: #48a187;
-        }
-
-        .table-container {
-            background: white;
-            border-radius: 10px;
-            overflow-x: auto;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            text-align: center;
-            font-size: 15px;
-        }
-
-        th {
-            background: #48a187;
-            color: white;
-            white-space: nowrap;
-        }
-
-        tr:hover {
-            background: #fdfaf0;
-        }
-
-        .btn-export {
-            text-decoration: none;
-            background: #3c8326;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
-
-        .remark-input {
-            width: 120px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        .save-btn {
-            background: #48a187;
-            color: white;
-            border: none;
-            padding: 5px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 5px;
-        }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); flex: 1; min-width: 150px; text-align: center; }
+        .card h3 { margin: 0; color: #777; font-size: 18px; }
+        .card p { margin: 10px 0 0; font-size: 24px; font-weight: bold; color: #48a187; }
+        .table-container { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; font-size: 15px; }
+        th { background: #48a187; color: white; white-space: nowrap; }
+        tr:hover { background: #fdfaf0; }
+        .btn-export { text-decoration: none; background: #3c8326; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block; margin-bottom: 15px; }
+        .floor-select, .channel-select { padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; background: #fff; cursor: pointer; }
+        .remark-input { width: 100px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+        .save-btn { background: #48a187; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
     </style>
 </head>
 
@@ -194,6 +115,8 @@ if ($result && $result->num_rows > 0) {
                     <th>大人數</th>
                     <th>幼兒數</th>
                     <th>當次入館幼兒</th>
+                    <th>樓層</th>
+                    <th>報名管道</th>
                     <th>館方備註</th>
                 </tr>
             </thead>
@@ -207,15 +130,29 @@ if ($result && $result->num_rows > 0) {
                             <td><?php echo $row['p_count']; ?></td>
                             <td><span style="color: #48a187; font-weight: bold;"><?php echo $row['c_count']; ?></span></td>
                             <td><?php echo str_replace('|', ', ', htmlspecialchars($row['checked_children'])); ?></td>
+                            <td>
+                                <select class="floor-select" id="floor_<?php echo $row['log_id']; ?>">
+                                    <option value="">選擇</option>
+                                    <option value="1F" <?php echo ($row['floor'] == '1F') ? 'selected' : ''; ?>>1樓</option>
+                                    <option value="2F" <?php echo ($row['floor'] == '2F') ? 'selected' : ''; ?>>2樓</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select class="channel-select" id="channel_<?php echo $row['log_id']; ?>">
+                                    <option value="">選擇</option>
+                                    <option value="網路預約" <?php echo ($row['channel'] == '網路預約') ? 'selected' : ''; ?>>網路預約</option>
+                                    <option value="現場報名" <?php echo ($row['channel'] == '現場報名') ? 'selected' : ''; ?>>現場報名</option>
+                                </select>
+                            </td>
                             <td class="remark-text">
                                 <input type="text" class="remark-input" id="remark_<?php echo $row['log_id']; ?>" value="<?php echo htmlspecialchars($row['remark'] ?? ''); ?>">
-                                <button class="save-btn" onclick="saveRemark(<?php echo $row['log_id']; ?>)">✔</button>
+                                <button class="save-btn" onclick="saveData(<?php echo $row['log_id']; ?>)">✔</button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7" style="padding: 40px; color: #999;">今日尚無人報到</td>
+                        <td colspan="9" style="padding: 40px; color: #999;">今日尚無人報到</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -223,15 +160,23 @@ if ($result && $result->num_rows > 0) {
     </div>
 
     <script>
-        async function saveRemark(logId) {
+        async function saveData(logId) {
             const remarkInput = document.getElementById('remark_' + logId);
-            if (!remarkInput) return;
+            const floorSelect = document.getElementById('floor_' + logId);
+            const channelSelect = document.getElementById('channel_' + logId);
+            
+            if (!remarkInput || !floorSelect || !channelSelect) return;
+            
             const remarkValue = remarkInput.value;
+            const floorValue = floorSelect.value;
+            const channelValue = channelSelect.value;
 
             const data = new URLSearchParams({
                 action: 'update_remark',
                 log_id: logId,
-                remark: remarkValue
+                remark: remarkValue,
+                floor: floorValue,
+                channel: channelValue
             });
 
             try {
@@ -241,7 +186,7 @@ if ($result && $result->num_rows > 0) {
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
-                    alert('備註已儲存');
+                    alert('資料已儲存');
                 } else {
                     alert('儲存失敗：' + res.message);
                 }
@@ -251,5 +196,4 @@ if ($result && $result->num_rows > 0) {
         }
     </script>
 </body>
-
 </html>

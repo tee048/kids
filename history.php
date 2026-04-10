@@ -48,7 +48,7 @@ $result = $conn->query($sql);
 </head>
 <body>
     <div class="header-section">
-        <h1 style="color: #468b4c;">歷史紀錄查詢 (日期區間)</h1>
+        <h1 style="color: #468b4c;">歷史紀錄查詢</h1>
         <a href="admin_panel.php" style="text-decoration: none; color: #666;">⬅ 返回管理面板</a>
     </div>
 

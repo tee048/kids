@@ -16,14 +16,16 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $action = $_POST['action'] ?? '';
 
 try {
-    // --- 功能 A：管理後台更新備註 ---
+    // --- 功能 A：管理後台更新 樓層、報名管道與備註 ---
     if ($action === 'update_remark') {
-        $log_id = (int)($_POST['log_id'] ?? 0);
-        $remark = $_POST['remark'] ?? '';
+        $log_id  = (int)($_POST['log_id'] ?? 0);
+        $remark  = $_POST['remark'] ?? '';
+        $floor   = $_POST['floor'] ?? '';   // 接收樓層參數
+        $channel = $_POST['channel'] ?? ''; // 接收報名管道參數
         
-        // 修正：使用 id 作為判斷基準
-        $stmt = $conn->prepare("UPDATE check_in_logs SET remark = ? WHERE id = ?");
-        $stmt->bind_param("si", $remark, $log_id);
+        // 修正：將 SQL 更新語句加入 floor 與 channel 欄位，並確保條件為 log_id
+        $stmt = $conn->prepare("UPDATE check_in_logs SET remark = ?, floor = ?, channel = ? WHERE log_id = ?");
+        $stmt->bind_param("sssi", $remark, $floor, $channel, $log_id);
         $stmt->execute();
 
         ob_clean();
@@ -85,7 +87,7 @@ try {
         exit;
     }
 
-    // --- 功能 B：舊會員報到邏輯 (已覆蓋為包含新幼兒性別/生日的完整版) ---
+    // --- 功能 B：舊會員報到邏輯 ---
     if ($action === 'final_checkin') {
         $member_id = (int)($_POST['member_id'] ?? 0);
         $selected_parents = $_POST['selected_parents'] ?? '';
@@ -107,7 +109,6 @@ try {
         $stmt->execute();
         $old_data = $stmt->get_result()->fetch_assoc();
 
-        // 處理家長追加
         if ($new_parent !== "") {
             $db_parents = explode('|', $old_data['parent_name'] ?? '');
             if (!in_array($new_parent, $db_parents)) {
@@ -119,7 +120,6 @@ try {
             }
         }
 
-        // 處理幼兒追加與年齡計算
         if ($new_child !== "" && $new_birthday !== "") {
             $db_names = explode('|', $old_data['child_name'] ?? '');
             if (!in_array($new_child, $db_names)) {
