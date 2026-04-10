@@ -58,7 +58,7 @@ $result = $conn->query($sql);
             <input type="date" name="start_date" value="<?php echo $start_date; ?>">
             <strong>至 結束日期：</strong>
             <input type="date" name="end_date" value="<?php echo $end_date; ?>">
-            <button type="submit" class="btn-search">🔍 搜尋</button>
+            <button type="submit" class="btn-search">搜尋</button>
             
             <a href="export_excel.php?start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>" class="btn-export">匯出 Excel</a>
             
