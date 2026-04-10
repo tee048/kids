@@ -1,31 +1,49 @@
 <?php
-// 開啟輸出緩衝，確保中途的 PHP 警告不會破壞最終的 JSON 格式
 ob_start();
 header('Content-Type: application/json');
 
 $conn = new mysqli("localhost", "root", "", "kids_club");
-
 if ($conn->connect_error) {
     ob_clean();
     die(json_encode(["status" => "error", "message" => "資料庫連線失敗"]));
 }
 
-// 強制捕捉資料庫層級錯誤
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
 $action = $_POST['action'] ?? '';
 
 try {
-    // --- 功能 A：管理後台更新 樓層、報名管道與備註 ---
+    // --- 功能 A：管理後台更新 (備註、樓層、管道) ---
     if ($action === 'update_remark') {
         $log_id  = (int)($_POST['log_id'] ?? 0);
         $remark  = $_POST['remark'] ?? '';
-        $floor   = $_POST['floor'] ?? '';   // 接收樓層參數
-        $channel = $_POST['channel'] ?? ''; // 接收報名管道參數
+        $floor   = $_POST['floor'] ?? '';   
+        $channel = $_POST['channel'] ?? ''; 
         
-        // 修正：將 SQL 更新語句加入 floor 與 channel 欄位，並確保條件為 log_id
         $stmt = $conn->prepare("UPDATE check_in_logs SET remark = ?, floor = ?, channel = ? WHERE log_id = ?");
         $stmt->bind_param("sssi", $remark, $floor, $channel, $log_id);
+        $stmt->execute();
+
+        ob_clean();
+        echo json_encode(["status" => "success"]);
+        exit;
+    }
+
+    // --- 功能 F：更新每日全域資訊 (值班人 + 0-2專區) ---
+    if ($action === 'update_daily_duty') {
+        $morning   = $_POST['morning_staff'] ?? '';
+        $afternoon = $_POST['afternoon_staff'] ?? '';
+        $c02_4f    = (int)($_POST['count_02_4f'] ?? 0);
+        $c02_5f    = (int)($_POST['count_02_5f'] ?? 0);
+        $today     = date('Y-m-d');
+
+        $stmt = $conn->prepare("INSERT INTO daily_duty (duty_date, morning_staff, afternoon_staff, count_02_4f, count_02_5f) 
+                                VALUES (?, ?, ?, ?, ?) 
+                                ON DUPLICATE KEY UPDATE 
+                                morning_staff = VALUES(morning_staff), 
+                                afternoon_staff = VALUES(afternoon_staff),
+                                count_02_4f = VALUES(count_02_4f),
+                                count_02_5f = VALUES(count_02_5f)");
+        $stmt->bind_param("sssii", $today, $morning, $afternoon, $c02_4f, $c02_5f);
         $stmt->execute();
 
         ob_clean();
@@ -225,6 +243,5 @@ try {
 } catch (Exception $e) {
     ob_clean();
     echo json_encode(["status" => "error", "message" => "系統異常：" . $e->getMessage()]);
-    exit;
 }
 $conn->close();
