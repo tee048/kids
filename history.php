@@ -48,7 +48,7 @@ $result = $conn->query($sql);
 </head>
 <body>
     <div class="header-section">
-        <h1 style="color: #468b4c;">📋 歷史紀錄查詢 (日期區間)</h1>
+        <h1 style="color: #468b4c;">歷史紀錄查詢 (日期區間)</h1>
         <a href="admin_panel.php" style="text-decoration: none; color: #666;">⬅ 返回管理面板</a>
     </div>
 
@@ -60,7 +60,7 @@ $result = $conn->query($sql);
             <input type="date" name="end_date" value="<?php echo $end_date; ?>">
             <button type="submit" class="btn-search">🔍 搜尋</button>
             
-            <a href="export_excel.php?start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>" class="btn-export">📥 匯出 Excel</a>
+            <a href="export_excel.php?start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>" class="btn-export">匯出 Excel</a>
             
             <?php if($start_date || $end_date): ?>
                 <a href="history.php" style="color: #dc3545; font-size: 13px;">清除篩選</a>

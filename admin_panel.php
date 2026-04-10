@@ -160,8 +160,8 @@ if ($result && $result->num_rows > 0) {
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h1 style="color: #468b4c;">今日入館即時概況</h1>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="export_excel.php" class="btn-export" style="margin-bottom: 0;">📥 匯出 Excel</a>
-            <a href="history.php" style="text-decoration: none; background: #3c688e; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block;">🔍 歷史紀錄</a>
+            <a href="export_excel.php" class="btn-export" style="margin-bottom: 0;">匯出 Excel</a>
+            <a href="history.php" style="text-decoration: none; background: #3c688e; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block;">歷史紀錄</a>
         </div>
     </div>
 
