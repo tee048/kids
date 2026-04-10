@@ -13,9 +13,9 @@ $afternoon_staff = $duty['afternoon_staff'] ?? '';
 $db_c02_4f = $duty['count_02_4f'] ?? 0;
 $db_c02_5f = $duty['count_02_5f'] ?? 0;
 
-// 3. 抓取即時紀錄 (加入 m.relationship)
+// 3. 抓取即時紀錄 (加入 c.waitlist, c.serial_number)
 $sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone, 
-               c.remark, c.floor, c.channel, c.check_in_time, c.log_id,
+               c.remark, c.floor, c.channel, c.waitlist, c.serial_number, c.check_in_time, c.log_id,
                m.child_name, m.child_gender, m.relationship
         FROM check_in_logs c 
         JOIN members m ON c.member_id = m.id 
@@ -181,6 +181,14 @@ if ($result && $result->num_rows > 0) {
             border-radius: 4px;
         }
 
+        .serial-input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
         .save-btn {
             background: #48a187;
             color: white;
@@ -291,6 +299,8 @@ if ($result && $result->num_rows > 0) {
                     <th>關係</th>
                     <th>樓層</th>
                     <th>預約管道</th>
+                    <th>樓層候補</th>
+                    <th>序號</th>
                     <th>備註</th>
                 </tr>
             </thead>
@@ -318,6 +328,16 @@ if ($result && $result->num_rows > 0) {
                                 <option value="網路預約" <?php echo ($row['channel'] == '網路預約') ? 'selected' : ''; ?>>網路預約</option>
                                 <option value="現場報名" <?php echo ($row['channel'] == '現場報名') ? 'selected' : ''; ?>>現場報名</option>
                             </select>
+                        </td>
+                        <td>
+                            <select class="channel-select" id="waitlist_<?php echo $row['log_id']; ?>">
+                                <option value=""></option>
+                                <option value="4F候補" <?php echo (($row['waitlist'] ?? '') == '4F候補') ? 'selected' : ''; ?>>4F候補</option>
+                                <option value="5F候補" <?php echo (($row['waitlist'] ?? '') == '5F候補') ? 'selected' : ''; ?>>5F候補</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="serial-input" id="serial_number_<?php echo $row['log_id']; ?>" value="<?php echo htmlspecialchars($row['serial_number'] ?? ''); ?>" placeholder="序號">
                         </td>
                         <td>
                             <input type="text" class="remark-input" id="remark_<?php echo $row['log_id']; ?>" value="<?php echo htmlspecialchars($row['remark'] ?? ''); ?>">
@@ -356,7 +376,9 @@ if ($result && $result->num_rows > 0) {
                 log_id: logId,
                 remark: document.getElementById('remark_' + logId).value,
                 floor: document.getElementById('floor_' + logId).value,
-                channel: document.getElementById('channel_' + logId).value
+                channel: document.getElementById('channel_' + logId).value,
+                waitlist: document.getElementById('waitlist_' + logId).value,
+                serial_number: document.getElementById('serial_number_' + logId).value
             });
             try {
                 const response = await fetch('checkin_logic.php', {
@@ -364,7 +386,7 @@ if ($result && $result->num_rows > 0) {
                     body: data
                 });
                 const res = await response.json();
-                if (res.status === 'success') alert('已儲存備註');
+                if (res.status === 'success') alert('已儲存資料');
             } catch (error) {
                 alert('通訊錯誤');
             }

@@ -12,15 +12,18 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $action = $_POST['action'] ?? '';
 
 try {
-    // --- 功能 A：管理後台更新 (備註、樓層、管道) ---
+    // --- 功能 A：管理後台更新 (備註、樓層、管道、候補、序號) ---
     if ($action === 'update_remark') {
-        $log_id  = (int)($_POST['log_id'] ?? 0);
-        $remark  = $_POST['remark'] ?? '';
-        $floor   = $_POST['floor'] ?? '';   
-        $channel = $_POST['channel'] ?? ''; 
+        $log_id        = (int)($_POST['log_id'] ?? 0);
+        $remark        = $_POST['remark'] ?? '';
+        $floor         = $_POST['floor'] ?? '';   
+        $channel       = $_POST['channel'] ?? ''; 
+        $waitlist      = $_POST['waitlist'] ?? '';      // 新增：接收樓層候補
+        $serial_number = $_POST['serial_number'] ?? ''; // 新增：接收序號
         
-        $stmt = $conn->prepare("UPDATE check_in_logs SET remark = ?, floor = ?, channel = ? WHERE log_id = ?");
-        $stmt->bind_param("sssi", $remark, $floor, $channel, $log_id);
+        // 更新 SQL 語句以包含 waitlist 與 serial_number
+        $stmt = $conn->prepare("UPDATE check_in_logs SET remark = ?, floor = ?, channel = ?, waitlist = ?, serial_number = ? WHERE log_id = ?");
+        $stmt->bind_param("sssssi", $remark, $floor, $channel, $waitlist, $serial_number, $log_id);
         $stmt->execute();
 
         ob_clean();
