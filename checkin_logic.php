@@ -1,29 +1,52 @@
 <?php
-// 開啟輸出緩衝，確保中途的 PHP 警告不會破壞最終的 JSON 格式
 ob_start();
 header('Content-Type: application/json');
 
 $conn = new mysqli("localhost", "root", "", "kids_club");
-
 if ($conn->connect_error) {
     ob_clean();
     die(json_encode(["status" => "error", "message" => "資料庫連線失敗"]));
 }
 
-// 強制捕捉資料庫層級錯誤
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
 $action = $_POST['action'] ?? '';
 
 try {
-    // --- 功能 A：管理後台更新備註 ---
+    // --- 功能 A：管理後台更新 (備註、樓層、管道、候補、序號) ---
     if ($action === 'update_remark') {
-        $log_id = (int)($_POST['log_id'] ?? 0);
-        $remark = $_POST['remark'] ?? '';
+        $log_id        = (int)($_POST['log_id'] ?? 0);
+        $remark        = $_POST['remark'] ?? '';
+        $floor         = $_POST['floor'] ?? '';   
+        $channel       = $_POST['channel'] ?? ''; 
+        $waitlist      = $_POST['waitlist'] ?? '';      // 新增：接收樓層候補
+        $serial_number = $_POST['serial_number'] ?? ''; // 新增：接收序號
         
-        // 修正：使用 id 作為判斷基準
-        $stmt = $conn->prepare("UPDATE check_in_logs SET remark = ? WHERE id = ?");
-        $stmt->bind_param("si", $remark, $log_id);
+        // 更新 SQL 語句以包含 waitlist 與 serial_number
+        $stmt = $conn->prepare("UPDATE check_in_logs SET remark = ?, floor = ?, channel = ?, waitlist = ?, serial_number = ? WHERE log_id = ?");
+        $stmt->bind_param("sssssi", $remark, $floor, $channel, $waitlist, $serial_number, $log_id);
+        $stmt->execute();
+
+        ob_clean();
+        echo json_encode(["status" => "success"]);
+        exit;
+    }
+
+    // --- 功能 F：更新每日全域資訊 (值班人 + 0-2專區) ---
+    if ($action === 'update_daily_duty') {
+        $morning   = $_POST['morning_staff'] ?? '';
+        $afternoon = $_POST['afternoon_staff'] ?? '';
+        $c02_4f    = (int)($_POST['count_02_4f'] ?? 0);
+        $c02_5f    = (int)($_POST['count_02_5f'] ?? 0);
+        $today     = date('Y-m-d');
+
+        $stmt = $conn->prepare("INSERT INTO daily_duty (duty_date, morning_staff, afternoon_staff, count_02_4f, count_02_5f) 
+                                VALUES (?, ?, ?, ?, ?) 
+                                ON DUPLICATE KEY UPDATE 
+                                morning_staff = VALUES(morning_staff), 
+                                afternoon_staff = VALUES(afternoon_staff),
+                                count_02_4f = VALUES(count_02_4f),
+                                count_02_5f = VALUES(count_02_5f)");
+        $stmt->bind_param("sssii", $today, $morning, $afternoon, $c02_4f, $c02_5f);
         $stmt->execute();
 
         ob_clean();
@@ -85,7 +108,7 @@ try {
         exit;
     }
 
-    // --- 功能 B：舊會員報到邏輯 (已覆蓋為包含新幼兒性別/生日的完整版) ---
+    // --- 功能 B：舊會員報到邏輯 ---
     if ($action === 'final_checkin') {
         $member_id = (int)($_POST['member_id'] ?? 0);
         $selected_parents = $_POST['selected_parents'] ?? '';
@@ -107,7 +130,6 @@ try {
         $stmt->execute();
         $old_data = $stmt->get_result()->fetch_assoc();
 
-        // 處理家長追加
         if ($new_parent !== "") {
             $db_parents = explode('|', $old_data['parent_name'] ?? '');
             if (!in_array($new_parent, $db_parents)) {
@@ -119,7 +141,6 @@ try {
             }
         }
 
-        // 處理幼兒追加與年齡計算
         if ($new_child !== "" && $new_birthday !== "") {
             $db_names = explode('|', $old_data['child_name'] ?? '');
             if (!in_array($new_child, $db_names)) {
@@ -225,6 +246,5 @@ try {
 } catch (Exception $e) {
     ob_clean();
     echo json_encode(["status" => "error", "message" => "系統異常：" . $e->getMessage()]);
-    exit;
 }
 $conn->close();

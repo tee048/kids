@@ -202,7 +202,7 @@
 
                 <div class="label-group">您來自哪裡？</div>
                 <select id="city_region" onchange="updateSubDistrict()">
-                    <option value="">請選擇大區域</option>
+                    <option value="">請選擇區域</option>
                     <option value="桃園市中壢區">桃園市 中壢區</option>
                     <option value="桃園市其他行政區">桃園市 其他行政區</option>
                     <option value="其他縣市">其他縣市</option>
