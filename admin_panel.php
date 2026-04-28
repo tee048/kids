@@ -1,19 +1,26 @@
 <?php
+// 強制顯示錯誤，讓你看到 500 到底是哪一行出錯
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+date_default_timezone_set('Asia/Taipei');
+
 // 1. 建立資料庫連線
 $conn = new mysqli("localhost", "root", "", "kids_club");
+$conn->set_charset("utf8mb4");
+
 if ($conn->connect_error) die("連線失敗: " . $conn->connect_error);
 
 $today = date('Y-m-d');
 
 // 2. 抓取今日日報資訊
 $duty_res = $conn->query("SELECT * FROM daily_duty WHERE duty_date = '$today'");
-$duty = $duty_res->fetch_assoc();
+$duty = $duty_res ? $duty_res->fetch_assoc() : null;
 $morning_staff = $duty['morning_staff'] ?? '';
 $afternoon_staff = $duty['afternoon_staff'] ?? '';
 $db_c02_4f = $duty['count_02_4f'] ?? 0;
 $db_c02_5f = $duty['count_02_5f'] ?? 0;
 
-// 3. 抓取即時紀錄 (加入 c.waitlist, c.serial_number)
+// 3. 抓取即時紀錄
 $sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone, 
                c.remark, c.floor, c.channel, c.waitlist, c.serial_number, c.check_in_time, c.log_id,
                m.child_name, m.child_gender, m.relationship
@@ -21,15 +28,11 @@ $sql = "SELECT m.id as member_id, c.checked_parents, c.checked_children, m.phone
         JOIN members m ON c.member_id = m.id 
         WHERE DATE(c.check_in_time) = '$today'
         ORDER BY c.check_in_time DESC";
+
 $result = $conn->query($sql);
 
-$total_adults = 0;
-$total_children = 0;
-$total_boys = 0;
-$total_girls = 0;
-$count_4f = 0;
-$count_5f = 0;
-$rows = [];
+$total_adults = 0; $total_children = 0; $total_boys = 0; $total_girls = 0;
+$count_4f = 0; $count_5f = 0; $rows = [];
 
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
@@ -40,9 +43,8 @@ if ($result && $result->num_rows > 0) {
         $total_adults += $row['p_count'];
         $total_children += $row['c_count'];
 
-        // 統計邏輯：只有維持在 4F 或 5F 的兩組會被計算，已離館的不算在內
-        if ($row['floor'] === '4F') $count_4f++;
-        elseif ($row['floor'] === '5F') $count_5f++;
+        if (($row['floor'] ?? '') === '4F') $count_4f++;
+        elseif (($row['floor'] ?? '') === '5F') $count_5f++;
 
         $all_names = explode('|', $row['child_name'] ?? '');
         $all_genders = explode('|', $row['child_gender'] ?? '');
