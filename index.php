@@ -21,6 +21,15 @@
             padding: 25px;
         }
 
+        .box01 {
+            background-image: url(img/親子館.jpg);
+            background-size: cover;
+            background-position: center;
+            width: 100%;
+            height: 400px;
+
+        }
+
         .container2 {
             max-width: 900px;
             margin: auto;
@@ -131,12 +140,53 @@
             margin: 10px 8%;
             font-size: 16px;
         }
+
+        @media screen and (max-width:768px) {
+            body {
+                text-align: center;
+                padding: 30px;
+            }
+
+
+            .container1 {
+                padding: 0;
+                width: 100%;
+                height: auto;
+            }
+
+
+            .box01 {
+                background-image: url(img/親子館.jpg);
+                background-position: center;
+                background-size: contain;
+                width: 100%;
+                height: auto;
+                aspect-ratio: 800 / 500;
+
+            }
+
+            .container2 {
+                max-width: 100%;
+                height: auto;
+                margin: 20px;
+                padding: 25px;
+                border-radius: 20px;
+                background: white;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+
+            h2 {
+                color: #2c9635;
+                margin-bottom: 5px;
+                font-size: 28px;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container1">
-        <div class="box01" style="background-image: url(./img/親子館.jpg); height: 500px; background-size: cover; background-position: center;"></div>
+        <div class="box01"></div>
     </div>
 
     <div class="container2" id="checkinArea">
