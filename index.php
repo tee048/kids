@@ -4,25 +4,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中壢過嶺親子館 | 115年度入館登記</title>
+    <title>親子館 | 115年度入館登記</title>
     <style>
         body {
             font-family: sans-serif;
             padding: 20px;
             text-align: center;
-            background-color: #f4f7f6;
-            color: #333;
+            background-color: rgb(249, 249, 222);
         }
 
+        .bgc {
+            background-image: url(./img/kidm.png);
+            width: 100%;
+            height: 500px;
+            background-size: cover;
+            background-position: center center;
+
+        }
+       
         .container1 {
-            max-width: 1000px;
+            max-width: 1500px;
             max-height: 500px;
-            margin: auto;
-            padding: 25px;
+            margin: 5vh auto;
+            padding: 30px;
+        }
+
+        .container1 h1 {
+            color: #296b15;
+            font-size: 3rem;
         }
 
         .container2 {
-            max-width: 900px;
+            max-width: 1500px;
             margin: auto;
             padding: 25px;
             border-radius: 20px;
@@ -47,7 +60,7 @@
             width: 95%;
             padding: 12px;
             margin: 8px 0;
-            border: 1px solid #ddd;
+            border: 1px solid #f8f8ec;
             border-radius: 8px;
             font-size: 20px;
             box-sizing: border-box;
@@ -136,11 +149,13 @@
 
 <body>
     <div class="container1">
-        <div class="box01" style="background-image: url(./img/親子館.jpg); height: 500px; background-size: cover; background-position: center;"></div>
+        <div class="bgc">
+        </div>
+        <h1>歡樂時光從這裡開始！輸入手機現場報到，輕鬆入場。</h1>
     </div>
 
     <div class="container2" id="checkinArea">
-        <h2>中壢過嶺親子館</h2>
+        <h2>親子館</h2>
         <h3 id="form_title">115年度入館登記</h3>
 
         <form id="checkinForm">
