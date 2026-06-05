@@ -34,6 +34,15 @@
             font-size: 3rem;
         }
 
+        .box01 {
+            background-image: url(img/親子館.jpg);
+            background-size: cover;
+            background-position: center;
+            width: 100%;
+            height: 400px;
+
+        }
+
         .container2 {
             max-width: 1500px;
             margin: auto;
@@ -144,14 +153,59 @@
             margin: 10px 8%;
             font-size: 16px;
         }
+
+        @media screen and (max-width:768px) {
+            body {
+                text-align: center;
+                padding: 30px;
+            }
+
+
+            .container1 {
+                padding: 0;
+                width: 100%;
+                height: auto;
+            }
+
+
+            .box01 {
+                background-image: url(img/親子館.jpg);
+                background-position: center;
+                background-size: contain;
+                width: 100%;
+                height: auto;
+                aspect-ratio: 800 / 500;
+
+            }
+
+            .container2 {
+                max-width: 100%;
+                height: auto;
+                margin: 20px;
+                padding: 25px;
+                border-radius: 20px;
+                background: white;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+
+            h2 {
+                color: #2c9635;
+                margin-bottom: 5px;
+                font-size: 28px;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container1">
+<<<<<<< HEAD
         <div class="bgc">
         </div>
         <h1>歡樂時光從這裡開始！輸入手機現場報到，輕鬆入場。</h1>
+=======
+        <div class="box01"></div>
+>>>>>>> cba257b7a0a68dd763ce40593b8d5183a1f12435
     </div>
 
     <div class="container2" id="checkinArea">
